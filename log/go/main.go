@@ -1,0 +1,37 @@
+// run it with:
+//    go run main.go
+package main
+
+import (
+	"flag"
+	log "github.com/kdar/factorlog"
+	"os"
+)
+
+var (
+	logFlag = flag.String("log", "", "set log path")
+
+	logger *log.FactorLog
+)
+
+func SetGlobalLogger(logPath string) *log.FactorLog {
+	sfmt := `%{Color "red:white" "CRITICAL"}%{Color "red" "ERROR"}%{Color "yellow" "WARN"}%{Color "green" "INFO"}%{Color "cyan" "DEBUG"}%{Color "blue" "TRACE"}[%{Date} %{Time}] [%{SEVERITY}:%{ShortFile}:%{Line}] %{Message}%{Color "reset"}`
+	logger := log.New(os.Stdout, log.NewStdFormatter(sfmt))
+	if len(logPath) > 0 {
+		logf, err := os.OpenFile(logPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0640)
+		if err != nil {
+			return logger
+		}
+		logger = log.New(logf, log.NewStdFormatter(sfmt))
+	}
+	logger.SetSeverities(log.INFO | log.WARN | log.ERROR | log.FATAL | log.CRITICAL)
+	return logger
+}
+
+func main() {
+	flag.Parse()
+
+	logger = SetGlobalLogger(*logFlag)
+
+	logger.Info("hello world")
+}
